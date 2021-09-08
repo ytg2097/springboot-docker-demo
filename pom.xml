@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.ytg2097</groupId>
     <artifactId>springboot-docker-demo</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.3-SNAPSHOT</version>
     <name>springboot-docker-demo</name>
     <description>Demo project for Spring Boot</description>
     <properties>
@@ -31,7 +31,43 @@
         </dependency>
     </dependencies>
 
+    <profiles>
+        <!--配置profile分别对应resources下的两个资源目录dev和prod,
+            默认激活dev, 但可以通过-P prod替换-->
+        <profile>
+            <id>dev</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <profiles.active>dev</profiles.active>
+            </properties>
+        </profile>
+        <profile>
+            <id>prod</id>
+            <properties>
+                <profiles.active>prod</profiles.active>
+            </properties>
+        </profile>
+    </profiles>
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <!--排除掉所有dev和prod下的资源文件-->
+                <excludes>
+                    <exclude>dev/**</exclude>
+                    <exclude>prod/**</exclude>
+                </excludes>
+            </resource>
+
+            <resource>
+                <directory>src/main/resources/${profiles.active}</directory>
+                <!--filtering标签的作用是将环境变量, pom文件中的属性这些占位符
+                    替换为对应的<properties>标签中的属性-->
+                <filtering>true</filtering>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
@@ -53,8 +89,11 @@
                         <id>default</id>
                         <goals>
                             <!--mvn package会同时触发docker build
-                                mvn deploy 会先docker build 再docker push-->
+                                mvn deploy 会先docker build 再docker push
+                                -->
                             <goal>build</goal>
+                            <!--demo项目没有配置distributionManagement,
+                                所以先把<goal>push</goal>注释掉, 只演示mvn package-->
                             <!--<goal>push</goal>-->
                         </goals>
                     </execution>
